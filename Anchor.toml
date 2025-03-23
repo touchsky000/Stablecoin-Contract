@@ -8,13 +8,13 @@ skip-lint = false
 stablecoin_contract = "VoamAVHGGPRL97Lntut9cxoUjbhHPdaxmmmERxeaKBW"
 
 [programs.localnet]
-stablecoin_contract = "4t9PtdHj8aedrXA4F3etpDM268kAQYbP2LTxnXUECtj3"
+stablecoin_contract = "VoamAVHGGPRL97Lntut9cxoUjbhHPdaxmmmERxeaKBW"
 
 [registry]
-url = "https://devnet.helius-rpc.com/?api-key=f4cb653a-ed3a-4fab-95fc-acfab7e8a96a"
+url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "Devnet"
 wallet = "/home/whitehorse/.config/solana/id.json"
 
 [scripts]
