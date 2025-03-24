@@ -14,7 +14,7 @@ stablecoin_contract = "VoamAVHGGPRL97Lntut9cxoUjbhHPdaxmmmERxeaKBW"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Devnet"
+cluster = "Localnet"
 wallet = "/home/whitehorse/.config/solana/id.json"
 
 [scripts]
