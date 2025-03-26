@@ -8,7 +8,7 @@ skip-lint = false
 stablecoin_contract = "8aJCor7ZaxH9N5NFmkR9vhGcfHzfeVmXrmZ7zxBE1MNq"
 
 [programs.localnet]
-stablecoin_contract = "5Aq6EtvvcMZeVmJc6ZeMssEvxzpXeHg1vSfFoeCKfhGc"
+stablecoin_contract = "8aJCor7ZaxH9N5NFmkR9vhGcfHzfeVmXrmZ7zxBE1MNq"
 
 [registry]
 url = "https://api.apr.dev"

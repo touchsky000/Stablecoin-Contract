@@ -27,9 +27,7 @@ describe("stablecoin-contract", () => {
   let globalState = Keypair.generate()
   const mintCap = 100_000
   const reserveRatio = 50
-  let mint, userTokenAccount, adminTokenAccount, vaultTokenAccount, stablecoinMint, collateralMint, stableAta;
-
-
+  let userTokenAccountAta, vaultTokenAccount, stablecoinMint, collateralMint, stableAta;
 
   it("Is initialized!", async () => {
     // Add your test here.
@@ -71,16 +69,13 @@ describe("stablecoin-contract", () => {
       6, // Assuming 6 decimals for the stablecoin
     );
 
-    userTokenAccount = await getOrCreateAssociatedTokenAccount(
+    userTokenAccountAta = await getOrCreateAssociatedTokenAccount(
       provider.connection,
       admin,
       collateralMint,
       admin.publicKey
     );
-
   })
-
-
 
   it("update mint cap", async () => {
     const new_cap = 200_000
@@ -136,7 +131,7 @@ describe("stablecoin-contract", () => {
       provider.connection,
       admin,
       collateralMint,
-      userTokenAccount.address,
+      userTokenAccountAta.address,
       admin,
       1000000, // Mint 1 token (with 6 decimals),
       undefined,
@@ -147,7 +142,7 @@ describe("stablecoin-contract", () => {
     const tx = await program.methods.depositCollateral(amount)
       .accounts({
         user: admin.publicKey,
-        userTokenAccount: userTokenAccount.address,
+        userTokenAccount: userTokenAccountAta.address,
         vaultTokenAccount: vaultTokenAccount.address,
         globalState: globalState.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID
@@ -159,7 +154,7 @@ describe("stablecoin-contract", () => {
 
 
   it("stable coin create", async () => {
-    const [mintAuthPda] = await PublicKey.findProgramAddress(
+    const [mintAuthPda] = await PublicKey.findProgramAddressSync(
       [Buffer.from("mint"), globalState.publicKey.toBuffer()],
       program.programId
     );
@@ -183,16 +178,16 @@ describe("stablecoin-contract", () => {
   })
 
   it("admin mint stablecoin", async () => {
-
     const globalStateAccount = await program.account.globalState.fetch(globalState.publicKey);
     console.log("Mint Cap: ", globalStateAccount.mintCap.toString());
     console.log("Total Minted: ", globalStateAccount.totalMinted.toString());
-    const [mintAuthPda] = await PublicKey.findProgramAddress(
+    console.log("Total totalCollateral: ", globalStateAccount.totalCollateral.toString());
+    const [mintAuthPda] = await PublicKey.findProgramAddressSync(
       [Buffer.from("mint"), globalState.publicKey.toBuffer()],
       program.programId
     );
 
-    const mintAmount = new anchor.BN(800);
+    const mintAmount = new anchor.BN(100);
 
     const mintInfo = await getMint(provider.connection, stablecoinMint);
 
@@ -216,5 +211,33 @@ describe("stablecoin-contract", () => {
     const globalStateAccount = await program.account.globalState.fetch(globalState.publicKey);
     console.log("Mint Cap: ", globalStateAccount.mintCap.toString());
     console.log("Total Minted: ", globalStateAccount.totalMinted.toString());
+    console.log("Total totalCollateral: ", globalStateAccount.totalCollateral.toString());
+  })
+
+  it("admin redeem", async () => {
+    const redeem_amount = new anchor.BN(40)
+    
+    const [vaultAuthority] = await PublicKey.findProgramAddressSync(
+      [Buffer.from("vault")],
+      program.programId
+    );
+
+    const tx = await program.methods.adminRedeem(redeem_amount)
+    .accounts({
+      admin: admin.publicKey,
+      stablecoinMint: stablecoinMint,
+      adminStablecoinAccount: stableAta.address,
+      vaultTokenAccount: vaultTokenAccount.address,
+      adminCollateralAccount: userTokenAccountAta.address,
+      vaultAuthority: vaultAuthority,
+      globalState: globalState.publicKey,
+    })
+  })
+
+  it("get Global", async () => {
+    const globalStateAccount = await program.account.globalState.fetch(globalState.publicKey);
+    console.log("Mint Cap: ", globalStateAccount.mintCap.toString());
+    console.log("Total Minted: ", globalStateAccount.totalMinted.toString());
+    console.log("Total Minted: ", globalStateAccount.totalCollateral.toString());
   })
 });
