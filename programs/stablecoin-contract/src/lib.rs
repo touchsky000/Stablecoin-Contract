@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Burn, Mint, MintTo, Token, TokenAccount, Transfer};
-declare_id!("VoamAVHGGPRL97Lntut9cxoUjbhHPdaxmmmERxeaKBW");
+declare_id!("5Aq6EtvvcMZeVmJc6ZeMssEvxzpXeHg1vSfFoeCKfhGc");
 
 #[program]
 pub mod stablecoin_contract {
@@ -10,6 +10,7 @@ pub mod stablecoin_contract {
         msg!("Greetings from: {:?}", ctx.program_id);
         Ok(())
     }
+
 
     pub fn initialize_global_state(
         ctx: Context<InitializeGlobalState>,
@@ -134,7 +135,11 @@ pub mod stablecoin_contract {
 #[derive(Accounts)]
 pub struct InitializeGlobalState<'info> {
     ///CHECK:
-    #[account(init, payer = admin, space = 8 + 104)]
+    #[account(
+        init_if_needed, 
+        payer = admin, 
+        space = 8 + 8 * 100
+    )]
     pub global_state: Account<'info, GlobalState>,
     #[account(mut)]
     pub admin: Signer<'info>,
@@ -160,6 +165,8 @@ pub struct DepositCollateral<'info> {
     pub global_state: Account<'info, GlobalState>,
     pub token_program: Program<'info, Token>,
 }
+
+
 
 #[derive(Accounts)]
 pub struct MintStablecoin<'info> {
