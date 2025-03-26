@@ -5,7 +5,7 @@ seeds = false
 skip-lint = false
 
 [programs.devnet]
-stablecoin_contract = "5Aq6EtvvcMZeVmJc6ZeMssEvxzpXeHg1vSfFoeCKfhGc"
+stablecoin_contract = "8aJCor7ZaxH9N5NFmkR9vhGcfHzfeVmXrmZ7zxBE1MNq"
 
 [programs.localnet]
 stablecoin_contract = "5Aq6EtvvcMZeVmJc6ZeMssEvxzpXeHg1vSfFoeCKfhGc"
@@ -15,7 +15,7 @@ url = "https://api.apr.dev"
 
 [provider]
 cluster = "Localnet"
-wallet = "/root/.config/solana/id.json"
+wallet = "/home/whitehorse/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

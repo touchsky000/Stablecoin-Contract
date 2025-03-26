@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Burn, Mint, MintTo, Token, TokenAccount, Transfer};
-declare_id!("5Aq6EtvvcMZeVmJc6ZeMssEvxzpXeHg1vSfFoeCKfhGc");
+declare_id!("8aJCor7ZaxH9N5NFmkR9vhGcfHzfeVmXrmZ7zxBE1MNq");
 
 #[program]
 pub mod stablecoin_contract {
@@ -80,13 +80,21 @@ pub mod stablecoin_contract {
         require!(mint_amount <= state.mint_cap.saturating_sub(state.total_minted), CustomError::ExceedMintCap);
 
         let required_collateral = (state.total_minted.saturating_add(mint_amount)) * state.reserve_ratio / 100;
+        
+        msg!("state.total_minted ${:?}", state.total_minted.saturating_add(mint_amount));
+        msg!("state.reserve_ratio ${:?}", state.reserve_ratio);
+        msg!("required_collateral ${:?}", required_collateral);
+        msg!("state.total_collateral ${:?}", state.total_collateral);
+        println!("ok");
         require!(state.total_collateral >= required_collateral, CustomError::InsufficientGlobalReserve);
 
         let global_state_key = state.key();
+        msg!("passed");
         token::mint_to(
             ctx.accounts.into_mint_context().with_signer(&[&[b"mint", global_state_key.as_ref(), &[ctx.bumps.mint_authority_bump]]]),
             mint_amount,
         )?;
+        msg!("passed123");
         let state = &mut ctx.accounts.global_state;
         state.total_minted = state.total_minted.saturating_add(mint_amount);
         emit!(StablecoinMinted { amount: mint_amount });
@@ -183,7 +191,10 @@ pub struct MintStablecoin<'info> {
     pub global_state: Account<'info, GlobalState>,
     pub token_program: Program<'info, Token>,
     /// CHECK: This is safe because we use it as a PDA
-    #[account(seeds = [b"mint", global_state.key().as_ref()], bump)]
+    #[account(
+        seeds = [b"mint", global_state.key().as_ref()], 
+        bump
+    )]
     pub mint_authority_bump: UncheckedAccount<'info>,
 }
 
@@ -276,6 +287,7 @@ impl<'info> DepositCollateral<'info> {
 
 impl<'info> MintStablecoin<'info> {
     fn into_mint_context(&self) -> CpiContext<'_, '_, '_, 'info, MintTo<'info>> {
+        msg!("${:?}", self.mint_authority.to_account_info());
         CpiContext::new(
             self.token_program.to_account_info(),
             MintTo {
