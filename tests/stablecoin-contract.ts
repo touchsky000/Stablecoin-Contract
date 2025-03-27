@@ -15,6 +15,8 @@ import {
   createMint,
   mintTo,
   getMint,
+  getAssociatedTokenAddress,
+  getAccount
 } from "@solana/spl-token"
 describe("stablecoin-contract", () => {
   // Configure the client to use the local cluster.
@@ -27,7 +29,7 @@ describe("stablecoin-contract", () => {
   let globalState = Keypair.generate()
   const mintCap = 100_000
   const reserveRatio = 50
-  let userTokenAccountAta, vaultTokenAccount, stablecoinMint, collateralMint, stableAta;
+  let userTokenAccountAta, vaultTokenAccount, stablecoinMint, collateralMint, stableAta, adminStableAta;
 
   it("Is initialized!", async () => {
     // Add your test here.
@@ -119,11 +121,18 @@ describe("stablecoin-contract", () => {
 
   it("deposite_collateral", async () => {
     const amount = new anchor.BN(100)
+
+    const [vaultAuthority] = await PublicKey.findProgramAddressSync(
+      [Buffer.from("vault")],
+      program.programId
+    );
+
     vaultTokenAccount = await getOrCreateAssociatedTokenAccount(
       provider.connection,
       admin,
       collateralMint,
-      globalState.publicKey
+      vaultAuthority,
+      true
     )
 
     // Mint some tokens to the user's account first
@@ -178,10 +187,6 @@ describe("stablecoin-contract", () => {
   })
 
   it("admin mint stablecoin", async () => {
-    const globalStateAccount = await program.account.globalState.fetch(globalState.publicKey);
-    console.log("Mint Cap: ", globalStateAccount.mintCap.toString());
-    console.log("Total Minted: ", globalStateAccount.totalMinted.toString());
-    console.log("Total totalCollateral: ", globalStateAccount.totalCollateral.toString());
     const [mintAuthPda] = await PublicKey.findProgramAddressSync(
       [Buffer.from("mint"), globalState.publicKey.toBuffer()],
       program.programId
@@ -189,13 +194,19 @@ describe("stablecoin-contract", () => {
 
     const mintAmount = new anchor.BN(100);
 
-    const mintInfo = await getMint(provider.connection, stablecoinMint);
+    adminStableAta = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      admin,
+      stablecoinMint,
+      admin.publicKey,
+      true
+    );
 
     const tx = await program.methods.adminMintStablecoin(mintAmount)
       .accounts({
         user: admin.publicKey,
         stablecoinMint: stablecoinMint,
-        userStablecoinAccount: stableAta.address,
+        userStablecoinAccount: adminStableAta.address,
         mintAuthority: mintAuthPda,
         globalState: globalState.publicKey,
         tokenProgram: TOKEN_PROGRAM_ID,
@@ -203,41 +214,57 @@ describe("stablecoin-contract", () => {
       })
       .signers([admin])
       .rpc();
-
-    console.log("Mint Stablecoin Transaction: ", tx);
   });
+
+  it("StableCoin balance", async () => {
+    const userAta = await getAssociatedTokenAddress(stablecoinMint, admin.publicKey);
+    const tokenAccount = await getAccount(provider.connection, userAta);
+    console.log(">> Stable balance >>", Number(tokenAccount.amount))
+  })
+
+  it("admin redeem", async () => {
+    const redeem_amount = new anchor.BN(40)
+
+    const [vaultAuthority] = await PublicKey.findProgramAddressSync(
+      [Buffer.from("vault")],
+      program.programId
+    );
+
+    const adminStableAta = await getOrCreateAssociatedTokenAccount(
+      provider.connection,
+      admin,
+      stablecoinMint,
+      admin.publicKey,
+      true
+    );
+
+    const tx = await program.methods.adminRedeem(redeem_amount)
+      .accounts({
+        admin: admin.publicKey,
+        stablecoinMint: stablecoinMint,
+        adminStablecoinAccount: adminStableAta.address,
+        vaultTokenAccount: vaultTokenAccount.address,
+        adminCollateralAccount: userTokenAccountAta.address,
+        vaultAuthority: vaultAuthority,
+        globalState: globalState.publicKey,
+        tokenProgram: TOKEN_PROGRAM_ID
+      }).signers([admin])
+      .rpc()
+
+    console.log("Tx => ", tx)
+  })
+
+
+  it("token balance", async () => {
+    const colAta = await getAssociatedTokenAddress(collateralMint, admin.publicKey);
+    const tokenAccount = await getAccount(provider.connection, colAta);
+    console.log(">> Stable balance >>", Number(tokenAccount.amount))
+  })
 
   it("get Global", async () => {
     const globalStateAccount = await program.account.globalState.fetch(globalState.publicKey);
     console.log("Mint Cap: ", globalStateAccount.mintCap.toString());
     console.log("Total Minted: ", globalStateAccount.totalMinted.toString());
     console.log("Total totalCollateral: ", globalStateAccount.totalCollateral.toString());
-  })
-
-  it("admin redeem", async () => {
-    const redeem_amount = new anchor.BN(40)
-    
-    const [vaultAuthority] = await PublicKey.findProgramAddressSync(
-      [Buffer.from("vault")],
-      program.programId
-    );
-
-    const tx = await program.methods.adminRedeem(redeem_amount)
-    .accounts({
-      admin: admin.publicKey,
-      stablecoinMint: stablecoinMint,
-      adminStablecoinAccount: stableAta.address,
-      vaultTokenAccount: vaultTokenAccount.address,
-      adminCollateralAccount: userTokenAccountAta.address,
-      vaultAuthority: vaultAuthority,
-      globalState: globalState.publicKey,
-    })
-  })
-
-  it("get Global", async () => {
-    const globalStateAccount = await program.account.globalState.fetch(globalState.publicKey);
-    console.log("Mint Cap: ", globalStateAccount.mintCap.toString());
-    console.log("Total Minted: ", globalStateAccount.totalMinted.toString());
-    console.log("Total Minted: ", globalStateAccount.totalCollateral.toString());
   })
 });

@@ -94,9 +94,10 @@ pub mod stablecoin_contract {
             ctx.accounts.into_mint_context().with_signer(&[&[b"mint", global_state_key.as_ref(), &[ctx.bumps.mint_authority_bump]]]),
             mint_amount,
         )?;
-        msg!("passed123");
+        
         let state = &mut ctx.accounts.global_state;
         state.total_minted = state.total_minted.saturating_add(mint_amount);
+        msg!("passed123 ${:?}", state.total_minted);
         emit!(StablecoinMinted { amount: mint_amount });
         Ok(())
     }
@@ -121,17 +122,23 @@ pub mod stablecoin_contract {
             CustomError::InsufficientVaultCollateral
         );
 
-        
         token::burn(ctx.accounts.into_burn_context(), redeem_amount)?;
+        msg!("hel");
+        let seeds = &[b"vault".as_ref(), &[ctx.bumps.vault_authority]];
+        let signer_seeds = &[&seeds[..]];
+
         token::transfer(
-            ctx.accounts.into_return_context(),
+            ctx.accounts.into_return_context().with_signer(signer_seeds),
             released_collateral,
         )?;
-        
         let state = &mut ctx.accounts.global_state;
+        msg!("start1 {:?}", state.total_minted);
+        msg!("start2 {:?}", state.total_collateral);
         state.total_minted = state.total_minted.saturating_sub(redeem_amount);
         state.total_collateral = state.total_collateral.saturating_sub(released_collateral);
-
+        
+        msg!("end1 {:?}", state.total_minted);
+        msg!("end2 {:?}", state.total_collateral);
 
         emit!(CollateralRedeemed {
             amount: released_collateral
@@ -301,6 +308,7 @@ impl<'info> MintStablecoin<'info> {
 
 impl<'info> AdminRedeem<'info> {
     fn into_burn_context(&self) -> CpiContext<'_, '_, '_, 'info, Burn<'info>> {
+        msg!("owenr => {:?}", self.admin.to_account_info());
         CpiContext::new(
             self.token_program.to_account_info(),
             Burn {
@@ -312,6 +320,8 @@ impl<'info> AdminRedeem<'info> {
     }
 
     fn into_return_context(&self) -> CpiContext<'_, '_, '_, 'info, Transfer<'info>> {
+
+        msg!("authority: ${:?}", self.vault_authority.to_account_info());
         CpiContext::new(
             self.token_program.to_account_info(),
             Transfer {
