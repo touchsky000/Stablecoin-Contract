@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Burn, Mint, MintTo, Token, TokenAccount, Transfer};
-declare_id!("8aJCor7ZaxH9N5NFmkR9vhGcfHzfeVmXrmZ7zxBE1MNq");
+declare_id!("3gz13a5Pt9gjADuu4S8aEtaDBEjzKv15vrYjPMuNmqFW");
 
 #[program]
 pub mod stablecoin_contract {

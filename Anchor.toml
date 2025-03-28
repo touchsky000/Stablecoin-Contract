@@ -5,10 +5,10 @@ seeds = false
 skip-lint = false
 
 [programs.devnet]
-stablecoin_contract = "8aJCor7ZaxH9N5NFmkR9vhGcfHzfeVmXrmZ7zxBE1MNq"
+stablecoin_contract = "3gz13a5Pt9gjADuu4S8aEtaDBEjzKv15vrYjPMuNmqFW"
 
 [programs.localnet]
-stablecoin_contract = "8aJCor7ZaxH9N5NFmkR9vhGcfHzfeVmXrmZ7zxBE1MNq"
+stablecoin_contract = "3gz13a5Pt9gjADuu4S8aEtaDBEjzKv15vrYjPMuNmqFW"
 
 [registry]
 url = "https://api.apr.dev"
